@@ -87,4 +87,25 @@ resource "aws_instance" "ubuntu" {
   instance_type               = "t2.micro"
   associate_public_ip_address = true
   subnet_id                   = aws_subnet.subnet_public.id
+
+  # Security group to allow public access
+  vpc_security_group_ids = [aws_security_group.allow_public_access.id]
+}
+
+resource "aws_security_group" "allow_public_access" {
+  vpc_id = aws_vpc.my_vpc.id
+
+  ingress {
+    from_port   = 0
+    to_port     = 65535
+    protocol    = "tcp"
+    cidr_blocks = ["172.16.0.0/16"] # Replace with your specific IP range
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
