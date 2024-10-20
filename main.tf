@@ -78,6 +78,7 @@ resource "aws_elb" "learn" {
   name    = "Learn-ELB"
   subnets = [aws_subnet.subnet_public.id]
   tags = local.common_tags
+  instances  = aws_instance.ubuntu[*].id
   listener {
     instance_port     = 8000
     instance_protocol = "http"
@@ -93,7 +94,6 @@ resource "aws_elb" "learn" {
     interval            = 30
   }
 
-  instances                   = [aws_instance.ubuntu.id]
   idle_timeout                = 400
   connection_draining         = true
   connection_draining_timeout = 400
@@ -103,9 +103,11 @@ resource "aws_elb" "learn" {
 resource "aws_instance" "ubuntu" {
   ami                         = data.aws_ami.ubuntu.id
   instance_type               = "t2.micro"
-  associate_public_ip_address = true
+  associate_public_ip_address = (count.index == 0 ? true : false)
   subnet_id                   = aws_subnet.subnet_public.id
-  tags                        = local.common_tags
+  tags                        = merge(local.common_tags)
+  count                       = (var.high_availability == true ? 3 : 1)
+  
   # Security group to allow public access
   vpc_security_group_ids = [aws_security_group.allow_public_access.id]
 }
